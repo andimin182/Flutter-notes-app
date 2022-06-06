@@ -43,7 +43,10 @@ class _NotesPageState extends State<NotesPage> {
       appBar: AppBar(title: const Text('Notes'), actions: [
         IconButton(
           onPressed: () {
-            Navigator.of(context).pushNamed(newNoteRoute);
+            // We can pass arguments to pushed route with argument
+            Navigator.of(context).pushNamed(
+              createOrUpdateNoteRoute,
+            );
           },
           icon: const Icon(Icons.add),
         ),
@@ -83,6 +86,12 @@ class _NotesPageState extends State<NotesPage> {
                       if (snapshot.hasData) {
                         final allNotes = snapshot.data as List<DatabaseNote>;
                         return NotesListView(
+                          onTap: (note) async {
+                            Navigator.of(context).pushNamed(
+                              createOrUpdateNoteRoute,
+                              arguments: note,
+                            );
+                          },
                           notes: allNotes,
                           onDeletedNote: (note) async {
                             await _notesService.deleteNote(id: note.id);

@@ -6,7 +6,7 @@ import 'package:notes2/views/login.dart';
 import 'package:notes2/views/notes/notes_view.dart';
 import 'package:notes2/views/register.dart';
 
-import 'views/notes/new_note_view.dart';
+import 'views/notes/create_update_note_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         registerRoute: ((context) => const RegisterPage()),
         notesRoute: ((context) => const NotesPage()),
         verifyEmailRoute: ((context) => const VerifyEmailView()),
-        newNoteRoute: ((context) => const NewNoteView()),
+        createOrUpdateNoteRoute: ((context) => const CreateUpdateView()),
       },
       home: const HomePage(),
     );
