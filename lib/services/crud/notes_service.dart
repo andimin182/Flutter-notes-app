@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/cupertino.dart';
+import 'package:notes2/extensions/list/filter.dart';
 import 'package:notes2/services/crud/crud_exceptions.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' show join;
@@ -20,27 +21,41 @@ class NotesService {
 
   // Caching the notes
   List<DatabaseNote> _notes = [];
-  // Create a stream controller in order to allow the UI to read from
-  // ignore: prefer_typing_uninitialized_variables
-  late final _notesStreamController;
 
-  Stream<List<DatabaseNote>> get allNotes => _notesStreamController.stream;
+  // we create a user in order to filter the notes based on it
+  DatabaseUser? _user;
+  // Create a stream controller in order to allow the UI to read from
+  late final StreamController<List<DatabaseNote>> _notesStreamController;
+
+  Stream<List<DatabaseNote>> get allNotes =>
+      _notesStreamController.stream.filter((note) {
+        final currentUser = _user;
+        if (currentUser != null) {
+          return note.userId == currentUser.id;
+        } else {
+          throw UserShouldBeSetBeforeReadingAllNotes();
+        }
+      });
 
   Future<DatabaseUser> getOrCreateUser({
     required String email,
+    bool setAsCurrentUser = true,
   }) async {
-    log('inside create user');
     try {
-      log('inside create user 2');
       final user = await getUser(
         email: email,
       );
-      log('inside create user 3');
+      if (setAsCurrentUser) {
+        _user = user;
+      }
       return user;
     } on CouldNotFindUser {
       final createdUser = await createUser(
         email: email,
       );
+      if (setAsCurrentUser) {
+        _user = createdUser;
+      }
       return createdUser;
     } catch (e) {
       // No handling of the exception, only throwing it. It allows you
@@ -63,10 +78,15 @@ class NotesService {
     await _ensureDbIsOpen();
     final db = _getDatabaseOrThrow();
     await getNote(id: note.id);
-    final updatesCount = await db.update(noteTable, {
-      textColumn: text,
-      isSyncWithCloudColumn: 0,
-    });
+    final updatesCount = await db.update(
+      noteTable,
+      {
+        textColumn: text,
+        isSyncWithCloudColumn: 0,
+      },
+      where: 'id = ?',
+      whereArgs: [note.id],
+    );
     if (updatesCount == 0) {
       throw CouldNotUpdateNote();
     } else {
